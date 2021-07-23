@@ -1,1 +1,3 @@
-# Source code, results and the new COME15K RGB-D sod dataset
+# Cascaded RGB-D SOD (ICCV2021)
+RGB-D Saliency Detection via Cascaded Mutual Information Minimization
+![alt text](./network_overview.png)
