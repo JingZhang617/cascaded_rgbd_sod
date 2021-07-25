@@ -5,7 +5,7 @@ This is the official implementaion of CLNet paper "RGB-D Saliency Detection via 
 
 Please cite our paper if necessary:
 ```
-@inproceedings{yunqiu_cod21,
+@inproceedings{cascaded_rgbd_sod,
   title={RGB-D Saliency Detection via Cascaded Mutual Information Minimization},
   author={Zhang, Jing and Fan, Deng-Ping and Dai, Yuchao and Yu, Xin and Zhong, Yiran and Barnes, Nick and Shao, Ling},
   booktitle={International Conference on Computer Vision (ICCV)},
