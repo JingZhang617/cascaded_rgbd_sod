@@ -1,5 +1,5 @@
 # Cascaded RGB-D SOD with COME15K dataset (ICCV2021)
-This is the official implementaion of CLNet paper "RGB-D Saliency Detection via Cascaded Mutual Information Minimization"
+This is the official implementaion of CLNet paper "RGB-D Saliency Detection via Cascaded Mutual Information Minimization".
 
 # Our Bib:
 
