@@ -17,8 +17,8 @@ parser.add_argument('--latent_dim', type=int, default=3, help='latent dim')
 parser.add_argument('--feat_channel', type=int, default=64, help='reduced channel of saliency feat')
 opt = parser.parse_args()
 
-dataset_path = '/home/jingzhang/jing_files/RGBD_Dataset/test/'
-depth_path = '/home/jingzhang/jing_files/RGBD_Dataset/test/'
+dataset_path = './test/'
+depth_path = './test/'
 
 generator = Saliency_feat_endecoder(channel=opt.feat_channel)
 generator.load_state_dict(torch.load('./models/Model_100_gen.pth'))
@@ -28,7 +28,6 @@ generator.eval()
 
 #
 test_datasets = ['DES', 'LFSD','NJU2K','NLPR','SIP','STERE']
-#test_datasets = ['easy','hard']
 
 for dataset in test_datasets:
     save_path = './results/' + dataset + '/'
