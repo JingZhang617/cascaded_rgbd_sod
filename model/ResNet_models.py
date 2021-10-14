@@ -679,10 +679,6 @@ class Saliency_feat_endecoder(nn.Module):
             x3_2_depth = self.resnet_depth.layer3_2(x2_2_depth)  # 1024 x 16 x 16
             x4_2_depth = self.resnet_depth.layer4_2(x3_2_depth)  # 2048 x 8 x 8
             sal_ref_depth = self.sal_decoder4(x1_depth, x2_2_depth, x3_2_depth, x4_2_depth)
-            # print(x1_rgb.size())
-            # print(x2_rgb.size())
-            # print(x3_rgb.size())
-            # print(x4_rgb.size())
 
 
             lat_loss1, z1_rgb, z1_depth = self.mi_level1(self.convx1_rgb(x1_rgb), self.convx1_depth(x1_depth))
@@ -692,30 +688,7 @@ class Saliency_feat_endecoder(nn.Module):
 
             lat_loss = lat_loss1+lat_loss2+lat_loss3+lat_loss4
 
-            # feat_rgb = torch.cat((self.conv1_rgb(x1_rgb), self.upsample2(self.conv2_rgb(x2_2_rgb)),
-            #                       self.upsample4(self.conv3_rgb(x3_2_rgb)), self.upsample8(self.conv4_rgb(x4_2_rgb))),
-            #                      1)
-            # feat_rgb = self.rcab_rgb_feat(feat_rgb)
-            #
-            # feat_depth = torch.cat((self.conv1_depth(x1_depth), self.upsample2(self.conv2_depth(x2_2_depth)),
-            #                       self.upsample4(self.conv3_depth(x3_2_depth)), self.upsample8(self.conv4_depth(x4_2_depth))),
-            #                      1)
-            # feat_depth = self.rcab_depth_feat(feat_depth)
-            #
-            # lat_loss, z4_2_rgb, z4_2_depth = self.mi_level4(feat_rgb, feat_depth)
-
-            # z = torch.unsqueeze(z4_2_depth, 2)
-            # z = self.tile(z, 2, x4_2_rgb.shape[self.spatial_axes[0]])
-            # z = torch.unsqueeze(z, 3)
-            # z = self.tile(z, 3, x4_2_rgb.shape[self.spatial_axes[1]])
-
             sal_mi_rgb = self.sal_decoder5(x1_rgb, x2_2_rgb, x3_2_rgb, x4_2_rgb, z1_depth,z2_depth,z3_depth,z4_depth)
-
-
-            # z = torch.unsqueeze(z4_2_rgb, 2)
-            # z = self.tile(z, 2, x4_2_depth.shape[self.spatial_axes[0]])
-            # z = torch.unsqueeze(z, 3)
-            # z = self.tile(z, 3, x4_2_depth.shape[self.spatial_axes[1]])
 
             sal_mi_depth = self.sal_decoder6(x1_depth, x2_2_depth, x3_2_depth, x4_2_depth, z1_rgb,z2_rgb,z3_rgb,z4_rgb)
 
