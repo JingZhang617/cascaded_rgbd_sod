@@ -37,9 +37,9 @@ generator_params = generator.parameters()
 generator_optimizer = torch.optim.Adam(generator_params, opt.lr_gen)
 
 ## load data
-image_root = '/home/jingzhang/jing_files/RGBD_Dataset/train/old_train/RGB/'
-gt_root = '/home/jingzhang/jing_files/RGBD_Dataset/train/old_train/GT/'
-depth_root = '/home/jingzhang/jing_files/RGBD_Dataset/train/old_train/depth/'
+image_root = './RGB/'
+gt_root = './GT/'
+depth_root = './depth/'
 
 train_loader = get_loader(image_root, gt_root, depth_root, batchsize=opt.batchsize, trainsize=opt.trainsize)
 total_step = len(train_loader)
@@ -213,20 +213,6 @@ for epoch in range(1, opt.epoch+1):
                 depths = F.upsample(depths, size=(trainsize, trainsize), mode='bilinear', align_corners=True)
 
             init_rgb, ref_rgb, init_depth, ref_depth, mi_rgb, mi_depth, fuse_sal, latent_loss = generator.forward(images,depths)
-
-            # entrop_reg1 = -torch.sigmoid(init_rgb) * torch.log(torch.sigmoid(init_rgb) + 1e-8)
-            # entrop_reg2 = -torch.sigmoid(ref_rgb) * torch.log(torch.sigmoid(ref_rgb) + 1e-8)
-            # entrop_reg3 = -torch.sigmoid(init_depth) * torch.log(torch.sigmoid(init_depth) + 1e-8)
-            # entrop_reg4 = -torch.sigmoid(ref_depth) * torch.log(torch.sigmoid(ref_depth) + 1e-8)
-            # entrop_reg5 = -torch.sigmoid(mi_rgb) * torch.log(torch.sigmoid(mi_rgb) + 1e-8)
-            # entrop_reg6 = -torch.sigmoid(mi_depth) * torch.log(torch.sigmoid(mi_depth) + 1e-8)
-            # entrop_reg7 = -torch.sigmoid(fuse_sal) * torch.log(torch.sigmoid(fuse_sal) + 1e-8)
-
-            # entropy_rgb = entrop_reg1.sum(dim=(1))+entrop_reg2.sum(dim=(1))+entrop_reg5.sum(dim=(1))
-            # entropy_depth = entrop_reg3.sum(dim=(1)) + entrop_reg4.sum(dim=(1)) + entrop_reg6.sum(dim=(1))
-            # entropy_rgbd = entrop_reg7.sum(dim=(1))
-
-            #print(entropy_rgb.mean())
 
             sal_rgb_loss = structure_loss(init_rgb, gts) + structure_loss(ref_rgb, gts) + structure_loss(mi_rgb, gts)
             sal_depth_loss = structure_loss(init_depth, gts) + structure_loss(ref_depth, gts) + structure_loss(mi_depth, gts)
