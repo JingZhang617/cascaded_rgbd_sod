@@ -8,6 +8,12 @@ https://drive.google.com/drive/folders/1mGbFKlIJNeW0m7hE-1dGX0b2gcxSMXjB?usp=sha
 We further introduce two sets of testing dataset, namely COME-E and COME-H, which include 4,600 and 3,000 image pairs respectively, and can be downloaded at:
 https://drive.google.com/drive/folders/1w0M9YmYBzkMLijy_Blg6RMRshSvPZju-?usp=sharing
 
+训练数据百度网盘：
+链接:https://pan.baidu.com/s/15vaAkGuLVYPGuuYujDuhXg  密码:m2er
+
+测试数据百度网盘：
+链接:https://pan.baidu.com/s/1Ohidx48adju5gMI_hkGzug  密码:dofk
+
 # Rich Annotations
 ![alt text](./Annotations.png)
 
