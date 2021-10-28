@@ -11,8 +11,6 @@ from data import get_loader
 from utils import adjust_lr, AvgMeter
 from scipy import misc
 from utils import l2_regularisation
-import pytorch_ssim
-ssim_loss = pytorch_ssim.SSIM(window_size=11)
 
 
 parser = argparse.ArgumentParser()
@@ -43,7 +41,6 @@ depth_root = './depth/'
 
 train_loader = get_loader(image_root, gt_root, depth_root, batchsize=opt.batchsize, trainsize=opt.trainsize)
 total_step = len(train_loader)
-#train_z = torch.FloatTensor(training_set_size, opt.latent_dim).normal_(0, 1).cuda()
 
 ## define loss
 
@@ -62,9 +59,6 @@ def structure_loss(pred, mask):
     union = ((pred + mask) * weit).sum(dim=(2, 3))
     wiou  = 1-(inter+1)/(union-inter+1)
 
-    # ssimloss = ssim_loss(pred, mask)
-    # ssimloss = (weit*ssimloss).sum(dim=(2,3))/weit.sum(dim=(2,3))
-
     return (wbce+wiou).mean()
 
 def visualize_mi_rgb(var_map):
@@ -72,7 +66,6 @@ def visualize_mi_rgb(var_map):
     for kk in range(var_map.shape[0]):
         pred_edge_kk = var_map[kk,:,:,:]
         pred_edge_kk = pred_edge_kk.detach().cpu().numpy().squeeze()
-        # pred_edge_kk = (pred_edge_kk - pred_edge_kk.min()) / (pred_edge_kk.max() - pred_edge_kk.min() + 1e-8)
         pred_edge_kk *= 255.0
         pred_edge_kk = pred_edge_kk.astype(np.uint8)
         save_path = './temp/'
@@ -84,7 +77,6 @@ def visualize_mi_depth(var_map):
     for kk in range(var_map.shape[0]):
         pred_edge_kk = var_map[kk,:,:,:]
         pred_edge_kk = pred_edge_kk.detach().cpu().numpy().squeeze()
-        # pred_edge_kk = (pred_edge_kk - pred_edge_kk.min()) / (pred_edge_kk.max() - pred_edge_kk.min() + 1e-8)
         pred_edge_kk *= 255.0
         pred_edge_kk = pred_edge_kk.astype(np.uint8)
         save_path = './temp/'
@@ -97,7 +89,6 @@ def visualize_rgb_init(var_map):
     for kk in range(var_map.shape[0]):
         pred_edge_kk = var_map[kk,:,:,:]
         pred_edge_kk = pred_edge_kk.detach().cpu().numpy().squeeze()
-        # pred_edge_kk = (pred_edge_kk - pred_edge_kk.min()) / (pred_edge_kk.max() - pred_edge_kk.min() + 1e-8)
         pred_edge_kk *= 255.0
         pred_edge_kk = pred_edge_kk.astype(np.uint8)
         save_path = './temp/'
@@ -109,7 +100,6 @@ def visualize_depth_init(var_map):
     for kk in range(var_map.shape[0]):
         pred_edge_kk = var_map[kk,:,:,:]
         pred_edge_kk = pred_edge_kk.detach().cpu().numpy().squeeze()
-        # pred_edge_kk = (pred_edge_kk - pred_edge_kk.min()) / (pred_edge_kk.max() - pred_edge_kk.min() + 1e-8)
         pred_edge_kk *= 255.0
         pred_edge_kk = pred_edge_kk.astype(np.uint8)
         save_path = './temp/'
@@ -121,7 +111,6 @@ def visualize_rgb_ref(var_map):
     for kk in range(var_map.shape[0]):
         pred_edge_kk = var_map[kk,:,:,:]
         pred_edge_kk = pred_edge_kk.detach().cpu().numpy().squeeze()
-        # pred_edge_kk = (pred_edge_kk - pred_edge_kk.min()) / (pred_edge_kk.max() - pred_edge_kk.min() + 1e-8)
         pred_edge_kk *= 255.0
         pred_edge_kk = pred_edge_kk.astype(np.uint8)
         save_path = './temp/'
@@ -133,7 +122,6 @@ def visualize_depth_ref(var_map):
     for kk in range(var_map.shape[0]):
         pred_edge_kk = var_map[kk,:,:,:]
         pred_edge_kk = pred_edge_kk.detach().cpu().numpy().squeeze()
-        # pred_edge_kk = (pred_edge_kk - pred_edge_kk.min()) / (pred_edge_kk.max() - pred_edge_kk.min() + 1e-8)
         pred_edge_kk *= 255.0
         pred_edge_kk = pred_edge_kk.astype(np.uint8)
         save_path = './temp/'
@@ -145,7 +133,6 @@ def visualize_final_rgbd(var_map):
     for kk in range(var_map.shape[0]):
         pred_edge_kk = var_map[kk,:,:,:]
         pred_edge_kk = pred_edge_kk.detach().cpu().numpy().squeeze()
-        # pred_edge_kk = (pred_edge_kk - pred_edge_kk.min()) / (pred_edge_kk.max() - pred_edge_kk.min() + 1e-8)
         pred_edge_kk *= 255.0
         pred_edge_kk = pred_edge_kk.astype(np.uint8)
         save_path = './temp/'
@@ -157,7 +144,6 @@ def visualize_uncertainty_prior_init(var_map):
     for kk in range(var_map.shape[0]):
         pred_edge_kk = var_map[kk,:,:,:]
         pred_edge_kk = pred_edge_kk.detach().cpu().numpy().squeeze()
-        # pred_edge_kk = (pred_edge_kk - pred_edge_kk.min()) / (pred_edge_kk.max() - pred_edge_kk.min() + 1e-8)
         pred_edge_kk *= 255.0
         pred_edge_kk = pred_edge_kk.astype(np.uint8)
         save_path = './temp/'
