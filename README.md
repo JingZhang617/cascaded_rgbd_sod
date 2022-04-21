@@ -3,6 +3,7 @@ This is the official implementaion of CLNet paper "RGB-D Saliency Detection via 
 
 # Update
 1. Testing Sets Image Names
+
 For easier reference, we renamed samples from both our COME-H and COME-E dataset, and provide the benchmark models on our new datasets with the previous image names. We provide the old-new name pair at: https://drive.google.com/file/d/154flptPiEPeOfdEC_dddKvEFQ0CR6WKi/view?usp=sharing (COME-E dataset) and https://drive.google.com/file/d/1UIrD0WzvzketNWuOB_2z-tVVTki8_nbP/view?usp=sharing (COME-H dataset). Please rename the benchmark results at https://drive.google.com/drive/folders/1lCE8OHeqNdjhE4--yR0FFib2C5DBTgwn?usp=sharing for our two new testing datasets before performing performance evaluation.
 
 # COME15K RGB-D SOD Dataset
