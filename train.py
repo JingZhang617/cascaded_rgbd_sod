@@ -6,7 +6,7 @@ import numpy as np
 import pdb, os, argparse
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 from datetime import datetime
-from model.ResNet_models import Saliency_feat_endecoder
+from model.ResNet_models_combine import Saliency_feat_endecoder
 from data import get_loader
 from utils import adjust_lr, AvgMeter
 from scipy import misc
