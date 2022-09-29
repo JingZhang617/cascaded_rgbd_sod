@@ -13,6 +13,7 @@ from model.HolisticAttention import HA
 import math
 CE = torch.nn.BCELoss(reduction='sum')
 cos_sim = torch.nn.CosineSimilarity(dim=1,eps=1e-8)
+from model.batchrenorm import BatchRenorm2d
 
 class BasicConv2d(nn.Module):
     def __init__(self, in_planes, out_planes, kernel_size, stride=1, padding=0, dilation=1):
@@ -134,94 +135,6 @@ class Mutual_info_reg(nn.Module):
         return latent_loss, z_rgb, z_depth
 
 
-class Encoder_x(nn.Module):
-    def __init__(self, input_channels, channels, latent_size):
-        super(Encoder_x, self).__init__()
-        self.contracting_path = nn.ModuleList()
-        self.input_channels = input_channels
-        self.relu = nn.ReLU(inplace=True)
-        self.layer1 = nn.Conv2d(input_channels, channels, kernel_size=4, stride=2, padding=1)
-        self.bn1 = nn.BatchNorm2d(channels)
-        self.layer2 = nn.Conv2d(channels, 2*channels, kernel_size=4, stride=2, padding=1)
-        self.bn2 = nn.BatchNorm2d(channels * 2)
-        self.layer3 = nn.Conv2d(2*channels, 4*channels, kernel_size=4, stride=2, padding=1)
-        self.bn3 = nn.BatchNorm2d(channels * 4)
-        self.layer4 = nn.Conv2d(4*channels, 8*channels, kernel_size=4, stride=2, padding=1)
-        self.bn4 = nn.BatchNorm2d(channels * 8)
-        self.layer5 = nn.Conv2d(8*channels, 8*channels, kernel_size=4, stride=2, padding=1)
-        self.bn5 = nn.BatchNorm2d(channels * 8)
-        self.channel = channels
-
-        self.fc1 = nn.Linear(channels * 8 * 11 * 11, latent_size)
-        self.fc2 = nn.Linear(channels * 8 * 11 * 11, latent_size)
-
-        self.leakyrelu = nn.LeakyReLU()
-
-    def forward(self, input):
-        output = self.leakyrelu(self.bn1(self.layer1(input)))
-        # print(output.size())
-        output = self.leakyrelu(self.bn2(self.layer2(output)))
-        # print(output.size())
-        output = self.leakyrelu(self.bn3(self.layer3(output)))
-        # print(output.size())
-        output = self.leakyrelu(self.bn4(self.layer4(output)))
-        # print(output.size())
-        output = self.leakyrelu(self.bn4(self.layer5(output)))
-        output = output.view(-1, self.channel * 8 * 11 * 11)
-        # print(output.size())
-        # output = self.tanh(output)
-
-        mu = self.fc1(output)
-        logvar = self.fc2(output)
-        dist = Independent(Normal(loc=mu, scale=torch.exp(logvar)), 1)
-        # print(output.size())
-        # output = self.tanh(output)
-
-        return dist, mu, logvar
-
-class Encoder_xy(nn.Module):
-    def __init__(self, input_channels, channels, latent_size):
-        super(Encoder_xy, self).__init__()
-        self.contracting_path = nn.ModuleList()
-        self.input_channels = input_channels
-        self.relu = nn.ReLU(inplace=True)
-        self.layer1 = nn.Conv2d(input_channels, channels, kernel_size=4, stride=2, padding=1)
-        self.bn1 = nn.BatchNorm2d(channels)
-        self.layer2 = nn.Conv2d(channels, 2*channels, kernel_size=4, stride=2, padding=1)
-        self.bn2 = nn.BatchNorm2d(channels * 2)
-        self.layer3 = nn.Conv2d(2*channels, 4*channels, kernel_size=4, stride=2, padding=1)
-        self.bn3 = nn.BatchNorm2d(channels * 4)
-        self.layer4 = nn.Conv2d(4*channels, 8*channels, kernel_size=4, stride=2, padding=1)
-        self.bn4 = nn.BatchNorm2d(channels * 8)
-        self.layer5 = nn.Conv2d(8*channels, 8*channels, kernel_size=4, stride=2, padding=1)
-        self.bn5 = nn.BatchNorm2d(channels * 8)
-        self.channel = channels
-
-        self.fc1 = nn.Linear(channels * 8 * 11 * 11, latent_size)
-        self.fc2 = nn.Linear(channels * 8 * 11 * 11, latent_size)
-
-        self.leakyrelu = nn.LeakyReLU()
-
-    def forward(self, x):
-        output = self.leakyrelu(self.bn1(self.layer1(x)))
-        # print(output.size())
-        output = self.leakyrelu(self.bn2(self.layer2(output)))
-        # print(output.size())
-        output = self.leakyrelu(self.bn3(self.layer3(output)))
-        # print(output.size())
-        output = self.leakyrelu(self.bn4(self.layer4(output)))
-        # print(output.size())
-        output = self.leakyrelu(self.bn4(self.layer5(output)))
-        output = output.view(-1, self.channel * 8 * 11 * 11)
-
-        mu = self.fc1(output)
-        logvar = self.fc2(output)
-        dist = Independent(Normal(loc=mu, scale=torch.exp(logvar)), 1)
-        # print(output.size())
-        # output = self.tanh(output)
-
-        return dist, mu, logvar
-
 
 class CAM_Module(nn.Module):
     """ Channel attention module"""
@@ -298,100 +211,7 @@ class RCAB(nn.Module):
         res += x
         return res
 
-class Triple_Conv(nn.Module):
-    def __init__(self, in_channel, out_channel):
-        super(Triple_Conv, self).__init__()
-        self.reduce = nn.Sequential(
-            BasicConv2d(in_channel, out_channel, 1),
-            BasicConv2d(out_channel, out_channel, 3, padding=1),
-            BasicConv2d(out_channel, out_channel, 3, padding=1)
-        )
 
-    def forward(self, x):
-        return self.reduce(x)
-
-class _DenseAsppBlock(nn.Sequential):
-    """ ConvNet block for building DenseASPP. """
-
-    def __init__(self, input_num, num1, num2, dilation_rate, drop_out, bn_start=True):
-        super(_DenseAsppBlock, self).__init__()
-        self.asppconv = torch.nn.Sequential()
-        if bn_start:
-            self.asppconv = nn.Sequential(
-                nn.BatchNorm2d(input_num),
-                nn.ReLU(inplace=True),
-                nn.Conv2d(in_channels=input_num, out_channels=num1, kernel_size=1),
-                nn.BatchNorm2d(num1),
-                nn.ReLU(inplace=True),
-                nn.Conv2d(in_channels=num1, out_channels=num2, kernel_size=3,
-                          dilation=dilation_rate, padding=dilation_rate)
-            )
-        else:
-            self.asppconv = nn.Sequential(
-                nn.ReLU(inplace=True),
-                nn.Conv2d(in_channels=input_num, out_channels=num1, kernel_size=1),
-                nn.BatchNorm2d(num1),
-                nn.ReLU(inplace=True),
-                nn.Conv2d(in_channels=num1, out_channels=num2, kernel_size=3,
-                          dilation=dilation_rate, padding=dilation_rate)
-            )
-        self.drop_rate = drop_out
-
-    def forward(self, _input):
-        #feature = super(_DenseAsppBlock, self).forward(_input)
-        feature = self.asppconv(_input)
-
-        if self.drop_rate > 0:
-            feature = F.dropout2d(feature, p=self.drop_rate, training=self.training)
-
-        return feature
-
-
-class multi_scale_aspp(nn.Sequential):
-    """ ConvNet block for building DenseASPP. """
-
-    def __init__(self, channel):
-        super(multi_scale_aspp, self).__init__()
-        self.ASPP_3 = _DenseAsppBlock(input_num=channel, num1=channel * 2, num2=channel, dilation_rate=3,
-                                      drop_out=0.1, bn_start=False)
-
-        self.ASPP_6 = _DenseAsppBlock(input_num=channel * 2, num1=channel * 2, num2=channel,
-                                      dilation_rate=6, drop_out=0.1, bn_start=True)
-
-        self.ASPP_12 = _DenseAsppBlock(input_num=channel * 3, num1=channel * 2, num2=channel,
-                                       dilation_rate=12, drop_out=0.1, bn_start=True)
-
-        self.ASPP_18 = _DenseAsppBlock(input_num=channel * 4, num1=channel * 2, num2=channel,
-                                       dilation_rate=18, drop_out=0.1, bn_start=True)
-
-        self.ASPP_24 = _DenseAsppBlock(input_num=channel * 5, num1=channel * 2, num2=channel,
-                                       dilation_rate=24, drop_out=0.1, bn_start=True)
-        self.classification = nn.Sequential(
-            nn.Dropout2d(p=0.1),
-            nn.Conv2d(in_channels=channel * 6, out_channels=channel, kernel_size=1, padding=0)
-        )
-
-    def forward(self, _input):
-        #feature = super(_DenseAsppBlock, self).forward(_input)
-        aspp3 = self.ASPP_3(_input)
-        feature = torch.cat((aspp3, _input), dim=1)
-
-        aspp6 = self.ASPP_6(feature)
-        feature = torch.cat((aspp6, feature), dim=1)
-
-        aspp12 = self.ASPP_12(feature)
-        feature = torch.cat((aspp12, feature), dim=1)
-
-        aspp18 = self.ASPP_18(feature)
-        feature = torch.cat((aspp18, feature), dim=1)
-
-        aspp24 = self.ASPP_24(feature)
-
-        feature = torch.cat((aspp24, feature), dim=1)
-
-        aspp_feat = self.classification(feature)
-
-        return aspp_feat
 
 class Saliency_feat_decoder(nn.Module):
     # resnet based encoder decoder
@@ -425,12 +245,6 @@ class Saliency_feat_decoder(nn.Module):
 
         self.layer_depth = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], 3, channel * 4)
 
-        self.pam4 = PAM_Module(channel)
-        self.pam3 = PAM_Module(channel)
-
-        self.cam4 = CAM_Module()
-        self.cam3 = CAM_Module()
-
         self.rcab_z1 = RCAB(channel + latent_dim)
         self.conv_z1 = BasicConv2d(channel+latent_dim,channel,3,padding=1)
 
@@ -442,6 +256,12 @@ class Saliency_feat_decoder(nn.Module):
 
         self.rcab_z4 = RCAB(channel + latent_dim)
         self.conv_z4 = BasicConv2d(channel + latent_dim, channel, 3, padding=1)
+
+        self.br1 = BatchRenorm2d(channel)
+        self.br2 = BatchRenorm2d(channel)
+        self.br3 = BatchRenorm2d(channel)
+        self.br4 = BatchRenorm2d(channel)
+
 
     def _make_pred_layer(self, block, dilation_series, padding_series, NoLabels, input_channel):
         return block(dilation_series, padding_series, NoLabels, input_channel)
@@ -459,12 +279,10 @@ class Saliency_feat_decoder(nn.Module):
         return torch.index_select(a, dim, order_index)
 
     def forward(self, x1,x2,x3,x4,z1=None,z2=None,z3=None,z4=None):
-        conv1_feat = self.conv1(x1)
-        conv2_feat = self.conv2(x2)
-        conv3_feat = self.conv3(x3)
-        conv3_feat = self.pam3(conv3_feat) + self.cam3(conv3_feat)
-        conv4_feat = self.conv4(x4)
-        conv4_feat = self.pam4(conv4_feat) + self.cam4(conv4_feat)
+        conv1_feat = self.br1(self.conv1(x1))
+        conv2_feat = self.br2(self.conv2(x2))
+        conv3_feat = self.br3(self.conv3(x3))
+        conv4_feat = self.br4(self.conv4(x4))
 
         if z1!=None:
             z1 = torch.unsqueeze(z1, 2)
@@ -524,41 +342,6 @@ class Saliency_feat_decoder(nn.Module):
         return sal_init
 
 
-
-class PAM_Module(nn.Module):
-    """ Position attention module"""
-    #paper: Dual Attention Network for Scene Segmentation
-    def __init__(self, in_dim):
-        super(PAM_Module, self).__init__()
-        self.chanel_in = in_dim
-
-        self.query_conv = nn.Conv2d(in_channels=in_dim, out_channels=in_dim//8, kernel_size=1)
-        self.key_conv = nn.Conv2d(in_channels=in_dim, out_channels=in_dim//8, kernel_size=1)
-        self.value_conv = nn.Conv2d(in_channels=in_dim, out_channels=in_dim, kernel_size=1)
-        self.gamma = Parameter(torch.zeros(1))
-        self.softmax = Softmax(dim=-1)
-
-    def forward(self, x):
-        """
-            inputs :
-                x : input feature maps( B X C X H X W)
-            returns :
-                out : attention value + input feature ( B X C X H X W)
-                attention: B X (HxW) X (HxW)
-        """
-        m_batchsize, C, height, width = x.size()
-        proj_query = self.query_conv(x).view(m_batchsize, -1, width*height).permute(0, 2, 1)
-        proj_key = self.key_conv(x).view(m_batchsize, -1, width*height)
-        energy = torch.bmm(proj_query, proj_key)
-        attention = self.softmax(energy)
-        proj_value = self.value_conv(x).view(m_batchsize, -1, width*height)
-
-        out = torch.bmm(proj_value, attention.permute(0, 2, 1))
-        out = out.view(m_batchsize, C, height, width)
-
-        out = self.gamma*out + x
-        return out
-
 class Saliency_feat_endecoder(nn.Module):
     # resnet based encoder decoder
     def __init__(self, channel):
@@ -585,33 +368,15 @@ class Saliency_feat_endecoder(nn.Module):
         self.upsample0125 = nn.Upsample(scale_factor=0.125, mode='bilinear', align_corners=True)
 
 
-        self.rcab2 = RCAB(2*channel)
-        self.rcab3 = RCAB(2 * channel)
-        self.rcab4 = RCAB(2 * channel)
+        self.convx1_depth = nn.Conv2d(in_channels=256, out_channels=channel, kernel_size=3, padding=1)
+        self.convx2_depth = nn.Conv2d(in_channels=512, out_channels=channel, kernel_size=3, padding=1)
+        self.convx3_depth = nn.Conv2d(in_channels=1024, out_channels=channel, kernel_size=3, padding=1)
+        self.convx4_depth = nn.Conv2d(in_channels=2048, out_channels=channel, kernel_size=3, padding=1)
 
-        self.conv2 = Triple_Conv(2*channel, channel)
-        self.conv3 = Triple_Conv(2 * channel, channel)
-        self.conv4 = Triple_Conv(2 * channel, channel)
-
-        self.conv1_rgb = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 256)
-        self.conv2_rgb = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 512)
-        self.conv3_rgb = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 1024)
-        self.conv4_rgb = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 2048)
-
-        self.conv1_depth = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 256)
-        self.conv2_depth = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 512)
-        self.conv3_depth = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 1024)
-        self.conv4_depth = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 2048)
-
-        self.convx1_depth = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 256)
-        self.convx2_depth = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 512)
-        self.convx3_depth = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 1024)
-        self.convx4_depth = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 2048)
-
-        self.convx1_rgb = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 256)
-        self.convx2_rgb = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 512)
-        self.convx3_rgb = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 1024)
-        self.convx4_rgb = self._make_pred_layer(Classifier_Module, [6, 12, 18, 24], [6, 12, 18, 24], channel, 2048)
+        self.convx1_rgb = nn.Conv2d(in_channels=256, out_channels=channel, kernel_size=3, padding=1)
+        self.convx2_rgb = nn.Conv2d(in_channels=512, out_channels=channel, kernel_size=3, padding=1)
+        self.convx3_rgb = nn.Conv2d(in_channels=1024, out_channels=channel, kernel_size=3, padding=1)
+        self.convx4_rgb = nn.Conv2d(in_channels=2048, out_channels=channel, kernel_size=3, padding=1)
 
         self.mi_level1 = Mutual_info_reg(channel,channel,self.latent_dim)
         self.mi_level2 = Mutual_info_reg(channel, channel, self.latent_dim)
@@ -622,6 +387,8 @@ class Saliency_feat_endecoder(nn.Module):
         self.final_clc = nn.Conv2d(in_channels=4, out_channels=1, kernel_size=3, padding=1)
         self.rcab_rgb_feat = RCAB(channel*4)
         self.rcab_depth_feat = RCAB(channel*4)
+
+
 
 
         if self.training:
@@ -670,7 +437,7 @@ class Saliency_feat_endecoder(nn.Module):
             x = self.resnet_depth.relu(x)
             x = self.resnet_depth.maxpool(x)
             x1_depth = self.resnet_depth.layer1(x)  # 256 x 64 x 64
-            x2_depth = self.resnet_depth.layer2(x1_depth)  # 512 x 32 x 32
+            x2_depth = self.resnet_depth.layer2(x1_depth) # 512 x 32 x 32
             x3_depth = self.resnet_depth.layer3_1(x2_depth)  # 1024 x 16 x 16
             x4_depth = self.resnet_depth.layer4_1(x3_depth)  # 2048 x 8 x 8
 
@@ -718,18 +485,4 @@ class Saliency_feat_endecoder(nn.Module):
                 all_params[k] = v
         assert len(all_params.keys()) == len(self.resnet_rgb.state_dict().keys())
         self.resnet_rgb.load_state_dict(all_params)
-
-        for k, v in self.resnet_depth.state_dict().items():
-            if k in pretrained_dict.keys():
-                v = pretrained_dict[k]
-                all_params[k] = v
-            elif '_1' in k:
-                name = k.split('_1')[0] + k.split('_1')[1]
-                v = pretrained_dict[name]
-                all_params[k] = v
-            elif '_2' in k:
-                name = k.split('_2')[0] + k.split('_2')[1]
-                v = pretrained_dict[name]
-                all_params[k] = v
-        assert len(all_params.keys()) == len(self.resnet_depth.state_dict().keys())
         self.resnet_depth.load_state_dict(all_params)

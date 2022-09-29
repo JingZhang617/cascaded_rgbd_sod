@@ -172,6 +172,23 @@ def linear_annealing(init, fin, step, annealing_steps):
     annealed = min(init + delta * step / annealing_steps, fin)
     return annealed
 
+def visualize_all_pred(pred1,pred2,pred3,pred4,pred5,pred6,pred7,pred8):
+    for kk in range(pred1.shape[0]):
+        pred1_kk, pred2_kk, pred3_kk, pred4_kk, pred5_kk, pred6_kk, pred7_kk, pred8_kk = pred1[kk, :, :, :], pred2[kk, :, :, :], pred3[kk, :, :, :], pred4[kk, :, :, :], pred5[kk, :, :, :], pred6[kk, :, :, :], pred7[kk, :, :, :], pred8[kk, :, :, :]
+        pred1_kk = (pred1_kk.detach().cpu().numpy().squeeze()*255.0).astype(np.uint8)
+        pred2_kk = (pred2_kk.detach().cpu().numpy().squeeze() * 255.0).astype(np.uint8)
+        pred3_kk = (pred3_kk.detach().cpu().numpy().squeeze() * 255.0).astype(np.uint8)
+        pred4_kk = (pred4_kk.detach().cpu().numpy().squeeze() * 255.0).astype(np.uint8)
+        pred5_kk = (pred5_kk.detach().cpu().numpy().squeeze() * 255.0).astype(np.uint8)
+        pred6_kk = (pred6_kk.detach().cpu().numpy().squeeze() * 255.0).astype(np.uint8)
+        pred7_kk = (pred7_kk.detach().cpu().numpy().squeeze() * 255.0).astype(np.uint8)
+        pred8_kk = (pred8_kk.detach().cpu().numpy().squeeze() * 255.0).astype(np.uint8)
+
+        cat_img = cv2.hconcat([pred1_kk, pred2_kk, pred3_kk, pred4_kk, pred5_kk, pred6_kk, pred7_kk, pred8_kk])
+        save_path = './temp/'
+        name = '{:02d}_gt_initR_refR_intD_refD_mR_mD_Fused.png'.format(kk)
+        cv2.imwrite(save_path + name, cat_img)
+
 print("Let's Play!")
 for epoch in range(1, opt.epoch+1):
     generator.train()
@@ -210,14 +227,8 @@ for epoch in range(1, opt.epoch+1):
             sal_loss = sal_rgb_loss+sal_depth_loss+sal_final_rgbd + latent_loss
             sal_loss.backward()
             generator_optimizer.step()
-            visualize_gt(gts)
-            visualize_rgb_init(torch.sigmoid(init_rgb))
-            visualize_rgb_ref(torch.sigmoid(ref_rgb))
-            visualize_depth_init(torch.sigmoid(init_depth))
-            visualize_depth_ref(torch.sigmoid(ref_depth))
-            visualize_mi_rgb(torch.sigmoid(mi_rgb))
-            visualize_mi_depth(torch.sigmoid(mi_depth))
-            visualize_final_rgbd(torch.sigmoid(fuse_sal))
+            visualize_all_pred(gts,torch.sigmoid(init_rgb),torch.sigmoid(ref_rgb),torch.sigmoid(init_depth),torch.sigmoid(ref_depth),torch.sigmoid(mi_rgb),torch.sigmoid(mi_depth),torch.sigmoid(fuse_sal))
+
             if rate == 1:
                 loss_record.update(sal_loss.data, opt.batchsize)
 

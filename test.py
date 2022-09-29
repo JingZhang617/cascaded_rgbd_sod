@@ -3,7 +3,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import numpy as np
 import pdb, os, argparse
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 from scipy import misc
 from model.ResNet_models import Saliency_feat_endecoder
 from data import test_dataset
