@@ -431,7 +431,6 @@ class Saliency_feat_endecoder(nn.Module):
         else:
             x = torch.cat((raw_x,depth),1)
             x = self.conv_depth1(x)
-            # x = depth
             x = self.resnet_depth.conv1(x)
             x = self.resnet_depth.bn1(x)
             x = self.resnet_depth.relu(x)
