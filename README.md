@@ -37,7 +37,7 @@ maps: https://drive.google.com/file/d/1OPTc7NsGQq9uYBdfquLIbluMikWezYO8/view?usp
 Note that, due to being stochastic, the model can perform slightly different each time of training. 
 Solutions to get deterministic models:
 1) instead of using the reparameterization trick as we used, you can simply follow the auto-encoder learning pipeline, and map features directly to the embedding space;--- to achieve this, you will need to remove the variance mapping function;
-2) or you can simply define variance as 0, leading to deterministic generatration of the latent code, which is practice easier to implement.
+2) or you can simply define variance as 0, leading to deterministic generatration of the latent code, which is in practice easier to implement.
 
 # Our Bib:
 
