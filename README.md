@@ -28,6 +28,17 @@ https://drive.google.com/drive/folders/1lCE8OHeqNdjhE4--yR0FFib2C5DBTgwn?usp=sha
 We retrain state-of-the-art RGB-D SOD models with our new training dataset, and the re-trained models can be found at:
 https://drive.google.com/drive/folders/18Tqsn3yYoYO9HH8ZNVhHOTrJ7-UWPAZs?usp=sharing
 
+# Our trained model on conventional training dataset (the combination of NLPR and NJU2K data) and the produced saliency maps on SSB (STERE), DES, NLPR, NJU2K, LFSD, SIP:
+
+model: https://drive.google.com/file/d/1gUubs1eGr2fnrlgze-EFhD9XbghfAyhK/view?usp=share_link
+
+maps: https://drive.google.com/file/d/1OPTc7NsGQq9uYBdfquLIbluMikWezYO8/view?usp=share_link
+
+Note that, due to being stochastic, the model can perform slightly different each time of training. 
+Solutions to get deterministic models:
+1) instead of using the reparameterization trick as we used, you can simply follow the auto-encoder learning pipeline, and map features directly to the embedding space;--- to achieve this, you will need to remove the variance mapping function;
+2) or you can simply define variance as 0, leading to deterministic generatration of the latent code, which is practice easier to implement.
+
 # Our Bib:
 
 Please cite our paper if necessary:
